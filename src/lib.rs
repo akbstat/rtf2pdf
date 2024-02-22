@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use std::{fs, path::PathBuf, process::Command};
+use std::{fs, os::windows::process::CommandExt, path::PathBuf, process::Command};
 use vbs::vbs_render;
 
 mod vbs;
@@ -42,6 +42,7 @@ pub fn rtf2pdf(args: Vec<(PathBuf, PathBuf)>) -> Result<()> {
 
     fs::write(task_script.as_path(), vbs_render(args)?)?;
     let mut cmd = Command::new("cmd");
+    cmd.creation_flags(0x08000000);
     cmd.arg("/C").arg(task_script.to_string_lossy().to_string());
     let result = cmd.output().unwrap();
     if !result.status.success() {

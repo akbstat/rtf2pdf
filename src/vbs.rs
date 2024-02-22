@@ -6,10 +6,12 @@ const TEMPLATE: &str = "VBS";
 const VBS_TEMPLATE: &str = r#"
 Set objWord = CreateObject("Word.Application")
 objWord.Visible = False
+objWord.DisplayAlerts = wdAlertsNone
 {% for task in tasks %}
 Set objDoc = objWord.Documents.Open("{{task.0}}")
 objDoc.ExportAsFixedFormat "{{task.1}}", 17
 objDoc.Close False
+WScript.Sleep 100
 {% endfor %}
 objWord.Quit
 "#;
