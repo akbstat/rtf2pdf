@@ -8,9 +8,10 @@ Set objWord = CreateObject("Word.Application")
 objWord.Visible = False
 objWord.DisplayAlerts = wdAlertsNone
 {% for task in tasks %}
-Set objDoc = objWord.Documents.Open("{{task.0}}")
-objDoc.ExportAsFixedFormat "{{task.1}}", 17
-objDoc.Close False
+Set objDoc{{loop.index}} = objWord.Documents.Open("{{task.0}}")
+
+objDoc{{loop.index}}.ExportAsFixedFormat "{{task.1}}", 17
+objDoc{{loop.index}}.Close False
 WScript.Sleep 100
 {% endfor %}
 objWord.Quit
@@ -60,3 +61,13 @@ mod test_vbs {
         vbs_render(tasks).unwrap();
     }
 }
+
+// Set objDoc3 = objWord.Documents.Open("E:\Users\yuqi01.chen\Desktop\misc\output\ASCO\.temp\f-14-02-01-05-irrc-pfs-for-fas_part_0001.rtf")
+// objDoc3.ExportAsFixedFormat "E:\Users\yuqi01.chen\Desktop\misc\output\ASCO\.temp\f-14-02-01-05-irrc-pfs-for-fas_part_0001.pdf", 17
+// objDoc3.Close False
+// WScript.Sleep 100
+
+// Set objDoc4 = objWord.Documents.Open("E:\Users\yuqi01.chen\Desktop\misc\output\ASCO\.temp\t-14-01-03-01-dm-fas_part_0001.rtf")
+// objDoc4.ExportAsFixedFormat "E:\Users\yuqi01.chen\Desktop\misc\output\ASCO\.temp\t-14-01-03-01-dm-fas_part_0001.pdf", 17
+// objDoc4.Close False
+// WScript.Sleep 100
