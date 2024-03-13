@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
+encoding_rs = "0.8.33"
 nanoid = "0.4.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.108"

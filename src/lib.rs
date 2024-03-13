@@ -1,9 +1,16 @@
 use anyhow::{anyhow, Result};
+use encoding::{encode, need_encode};
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
-use std::{fs, os::windows::process::CommandExt, path::PathBuf, process::Command};
+use std::{
+    fs,
+    os::windows::process::CommandExt,
+    path::{Path, PathBuf},
+    process::Command,
+};
 use vbs::vbs_render;
 
+mod encoding;
 mod vbs;
 
 /// convert rtf to pdf
@@ -17,30 +24,41 @@ mod vbs;
 ///         Path::new(r"D:\Studies\ak112\303\stats\CSR\product\output\t-14-01-01-01-disp-scr.rtf");
 ///     let dest =
 ///         Path::new(r"D:\Studies\ak112\303\stats\CSR\product\output\t-14-01-01-01-disp-scr.pdf");
-///     rtf2pdf(vec![(source, dest)]).unwrap();
+///     let script_path = Path::new(r"D:\projects\rusty\mobius_kit\.utils\appdata\void_probe");
+///     rtf2pdf(vec![(source, dest)], script_path).unwrap();
 /// }
 /// ```
-pub fn rtf2pdf(args: Vec<(PathBuf, PathBuf)>) -> Result<()> {
+pub fn rtf2pdf(args: Vec<(PathBuf, PathBuf)>, script_path: &Path) -> Result<()> {
     if args.is_empty() {
         return Ok(());
     }
 
-    let task_script = {
-        let parent = args.get(0).unwrap().0.to_owned();
-        let parent = if parent.is_file() {
-            if let Some(p) = parent.parent() {
-                PathBuf::from(p)
+    let need_encode = need_encode(&args.get(0).unwrap().0.to_string_lossy().to_string());
+
+    let filename = format!(".task-{}.vbs", nanoid!(10));
+
+    let task_script = match script_path.exists() {
+        true => PathBuf::from(script_path.join(filename)),
+        false => {
+            let parent = args.get(0).unwrap().0.to_owned();
+            let parent = if parent.is_file() {
+                if let Some(p) = parent.parent() {
+                    PathBuf::from(p)
+                } else {
+                    parent
+                }
             } else {
                 parent
-            }
-        } else {
-            parent
-        };
-        let tasklist = parent.join(format!(".task-{}.vbs", nanoid!(10)));
-        tasklist
+            };
+            let tasklist = parent.join(filename);
+            tasklist
+        }
     };
-
-    fs::write(task_script.as_path(), vbs_render(args)?)?;
+    let script = vbs_render(args)?;
+    fs::write(task_script.as_path(), script)?;
+    if need_encode {
+        encode(task_script.as_path(), task_script.as_path())?;
+    }
     let mut cmd = Command::new("cmd");
     cmd.creation_flags(0x08000000);
     cmd.arg("/C").arg(task_script.to_string_lossy().to_string());
@@ -66,14 +84,18 @@ mod tests {
 
     #[test]
     fn rtf2pdf_test() {
+        let script_path = Path::new(r"D:\projects\rusty\mobius_kit\.utils\appdata\void_probe");
         let source = Path::new(
-            r"D:\Studies\ak112\303\stats\CSR\product\output\rtf_divided\l-16-02-08-05-ecg-ss_part_0001.rtf",
+            r"D:\Studies\ak112\303\stats\CSR\product\output\测试\l-16-02-04-08-01-antu-ex-ss.rtf",
         );
         let dest = Path::new(
-            r"D:\Studies\ak112\303\stats\CSR\product\output\rtf_divided\l-16-02-08-05-ecg-ss_part_0001.pdf",
+            r"D:\Studies\ak112\303\stats\CSR\product\output\测试\l-16-02-04-08-01-antu-ex-ss.pdf",
         );
         assert!(matches!(
-            rtf2pdf(vec![(PathBuf::from(source), PathBuf::from(dest))]),
+            rtf2pdf(
+                vec![(PathBuf::from(source), PathBuf::from(dest))],
+                script_path
+            ),
             Ok(())
         ));
     }
